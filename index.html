@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deep Learning Projects</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    header { max-width: 900px; }
+    header h1 { font-size: clamp(2rem, 5vw, 3.2rem); }
+    main { max-width: 900px; }
+
+    .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent-dim) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .card:hover {
+      background: #1c2030;
+      border-color: var(--accent-dim);
+      transform: translateY(-2px);
+    }
+    .card:hover::before { opacity: 0.08; }
+
+    .card-icon { font-size: 1.75rem; line-height: 1; }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-arrow {
+      color: var(--accent);
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .card:hover .card-arrow { opacity: 1; transform: translateX(0); }
+
+    .card-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.55; }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: auto;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: var(--border);
+      color: var(--muted);
+    }
+    .tag.accent {
+      background: rgba(124, 106, 247, 0.15);
+      color: var(--accent);
+    }
+
+    .placeholder-card {
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      min-height: 140px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="eyebrow">Practical Deep Learning for Coders</p>
+    <h1>Deep Learning<br>Projects</h1>
+    <p class="subtitle">
+      Models built during Jeremy Howard's
+      <a href="https://course.fast.ai" target="_blank" rel="noopener">fast.ai course</a>.
+      Each project is deployed as a live demo on
+      <a href="https://huggingface.co/rawmeta3000" target="_blank" rel="noopener">Hugging Face Spaces</a>.
+    </p>
+  </header>
+
+  <main>
+    <p class="section-label">Lessons</p>
+
+    <div class="grid">
+
+      <a class="card" href="scifan.html">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">
+          <span>SciFan Classifier</span>
+          <span class="card-arrow">→</span>
+        </div>
+        <p class="card-desc">
+          Is it sci-fi or fantasy? Upload any image and a ResNet model
+          trained from scratch will decide.
+        </p>
+        <div class="card-tags">
+          <span class="tag accent">Lesson 1</span>
+          <span class="tag">Image Classification</span>
+          <span class="tag">ResNet</span>
+        </div>
+      </a>
+
+      <div class="placeholder-card">more coming soon…</div>
+      <div class="placeholder-card">more coming soon…</div>
+
+    </div>
+  </main>
+
+  <footer>
+    <a href="https://huggingface.co/rawmeta3000" target="_blank" rel="noopener">Hugging Face</a>
+    &nbsp;·&nbsp;
+    <a href="https://course.fast.ai" target="_blank" rel="noopener">fast.ai</a>
+  </footer>
+
+</body>
+</html>

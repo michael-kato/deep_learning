@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SciFan Classifier</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(124, 106, 247, 0.05);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .drop-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .drop-label { font-size: 0.95rem; color: var(--muted); }
+    .drop-label strong { color: var(--accent); }
+    .drop-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.35rem; opacity: 0.7; }
+
+    .preview-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .preview-wrap.visible { display: flex; }
+
+    .preview-img {
+      max-width: 100%;
+      max-height: 340px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      object-fit: contain;
+    }
+
+    .btn-row { display: flex; gap: 0.75rem; }
+
+    .result-box {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-top: 1rem;
+    }
+    .result-box.visible { display: block; }
+
+    .result-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .verdict { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .verdict.scifi  { color: #60a5fa; }
+    .verdict.fantasy { color: #c084fc; }
+
+    .confidence-main { font-size: 0.88rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+    .bars { display: flex; flex-direction: column; gap: 0.75rem; }
+    .bar-row { display: flex; flex-direction: column; gap: 0.3rem; }
+    .bar-meta { display: flex; justify-content: space-between; font-size: 0.82rem; }
+    .bar-name { color: var(--text); }
+    .bar-pct  { color: var(--muted); }
+    .bar-track {
+      height: 6px;
+      border-radius: 999px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent);
+      transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .error-box {
+      display: none;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.25);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      color: #f87171;
+      font-size: 0.88rem;
+      margin-top: 1rem;
+    }
+    .error-box.visible { display: block; }
+
+    .about {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .about h2 {
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    .about p { font-size: 0.88rem; color: var(--muted); line-height: 1.65; }
+    .about a { color: var(--accent); text-decoration: none; }
+    .about a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Projects</a>
+    <span class="sep">/</span>
+    <span class="current">SciFan Classifier</span>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Lesson 1 &nbsp;·&nbsp; Image Classification</p>
+    <h1>SciFan Classifier</h1>
+    <p class="subtitle">
+      Upload any image and a ResNet model will tell you whether it looks more like
+      <strong style="color:#60a5fa">sci-fi</strong> or <strong style="color:#c084fc">fantasy</strong>.
+    </p>
+  </header>
+
+  <main>
+
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept="image/*" />
+      <div class="drop-icon">🖼️</div>
+      <p class="drop-label"><strong>Click to upload</strong> or drag &amp; drop</p>
+      <p class="drop-sub">JPG, PNG, WebP — any image works</p>
+    </div>
+
+    <div class="preview-wrap" id="previewWrap">
+      <img class="preview-img" id="previewImg" alt="Preview" />
+      <div class="btn-row">
+        <button class="btn-primary" id="classifyBtn">Classify</button>
+        <button class="btn-ghost" id="resetBtn">Choose another</button>
+      </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="result-box" id="resultBox">
+      <p class="result-label">Prediction</p>
+      <div class="verdict" id="verdictLabel"></div>
+      <p class="confidence-main" id="confidenceMain"></p>
+      <div class="bars" id="barsContainer"></div>
+    </div>
+
+    <div class="about">
+      <h2>About this model</h2>
+      <p>
+        A ResNet-based image classifier trained with
+        <a href="https://docs.fast.ai" target="_blank" rel="noopener">fastai</a>
+        on images scraped from the web — sci-fi imagery (spaceships, robots, futuristic cities)
+        vs. fantasy imagery (dragons, magic, medieval landscapes).
+        Built as part of
+        <a href="https://course.fast.ai" target="_blank" rel="noopener">Practical Deep Learning for Coders</a>
+        (Lesson 1). Hosted on
+        <a href="https://huggingface.co/spaces/rawmeta3000/scifan" target="_blank" rel="noopener">Hugging Face Spaces</a>.
+      </p>
+    </div>
+
+  </main>
+
+  <footer>
+    <a href="https://huggingface.co/spaces/rawmeta3000/scifan" target="_blank" rel="noopener">View on Hugging Face</a>
+    &nbsp;·&nbsp;
+    <a href="index.html">All Projects</a>
+  </footer>
+
+  <script>
+    const HF_SPACE    = 'https://rawmeta3000-scifan.hf.space';
+    const API_ENDPOINT = `${HF_SPACE}/call/classify_image`;
+
+    const dropZone      = document.getElementById('dropZone');
+    const fileInput     = document.getElementById('fileInput');
+    const previewWrap   = document.getElementById('previewWrap');
+    const previewImg    = document.getElementById('previewImg');
+    const classifyBtn   = document.getElementById('classifyBtn');
+    const resetBtn      = document.getElementById('resetBtn');
+    const errorBox      = document.getElementById('errorBox');
+    const resultBox     = document.getElementById('resultBox');
+    const verdictLabel  = document.getElementById('verdictLabel');
+    const confidenceMain = document.getElementById('confidenceMain');
+    const barsContainer = document.getElementById('barsContainer');
+
+    let currentFile = null;
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) loadFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) loadFile(fileInput.files[0]);
+    });
+
+    function loadFile(file) {
+      currentFile = file;
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        dropZone.style.display = 'none';
+        previewWrap.classList.add('visible');
+        hideResult();
+        hideError();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    resetBtn.addEventListener('click', () => {
+      currentFile = null;
+      fileInput.value = '';
+      previewImg.src = '';
+      previewWrap.classList.remove('visible');
+      dropZone.style.display = '';
+      hideResult();
+      hideError();
+    });
+
+    classifyBtn.addEventListener('click', classify);
+
+    async function classify() {
+      if (!currentFile) return;
+
+      classifyBtn.disabled = true;
+      classifyBtn.innerHTML = '<span class="spinner"></span>Classifying…';
+      hideError();
+      hideResult();
+
+      try {
+        const base64 = await toBase64(currentFile);
+
+        const startRes = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: [{
+              path: null,
+              url: base64,
+              size: currentFile.size,
+              orig_name: currentFile.name,
+              mime_type: currentFile.type,
+              is_stream: false,
+              meta: {}
+            }]
+          })
+        });
+
+        if (!startRes.ok) throw new Error(`API error: ${startRes.status}`);
+        const { event_id } = await startRes.json();
+        const result = await pollResult(event_id);
+        showResult(result);
+
+      } catch (err) {
+        showError(err.message || 'Something went wrong. Is the Space awake?');
+      } finally {
+        classifyBtn.disabled = false;
+        classifyBtn.textContent = 'Classify';
+      }
+    }
+
+    function pollResult(event_id) {
+      return new Promise((resolve, reject) => {
+        const es = new EventSource(`${API_ENDPOINT}/${event_id}`);
+        const timeout = setTimeout(() => {
+          es.close();
+          reject(new Error('Timed out — the Space may be waking up. Try again in a moment.'));
+        }, 60000);
+
+        es.addEventListener('error', ev => {
+          try {
+            const data = JSON.parse(ev.data);
+            clearTimeout(timeout);
+            es.close();
+            reject(new Error(data.message || 'Prediction error'));
+          } catch (_) { /* connection drop, will retry */ }
+        });
+
+        es.addEventListener('complete', ev => {
+          clearTimeout(timeout);
+          es.close();
+          try {
+            resolve(JSON.parse(ev.data)[0]);
+          } catch (_) {
+            reject(new Error('Could not parse response from model.'));
+          }
+        });
+      });
+    }
+
+    function showResult(data) {
+      const label = data.label || '';
+      const confs = data.confidences || [];
+
+      const isScifi = label.toLowerCase().includes('sci');
+      verdictLabel.textContent = isScifi ? '🚀 Sci-Fi' : '🐉 Fantasy';
+      verdictLabel.className = 'verdict ' + (isScifi ? 'scifi' : 'fantasy');
+
+      const top = confs.find(c => c.label === label);
+      const pct = top ? Math.round(top.confidence * 100) : null;
+      confidenceMain.textContent = pct !== null ? `${pct}% confident` : '';
+
+      barsContainer.innerHTML = '';
+      confs.forEach(c => {
+        const p = Math.round((c.confidence || 0) * 100);
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        row.innerHTML = `
+          <div class="bar-meta">
+            <span class="bar-name">${c.label}</span>
+            <span class="bar-pct">${p}%</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>`;
+        barsContainer.appendChild(row);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          row.querySelector('.bar-fill').style.width = `${p}%`;
+        }));
+      });
+
+      resultBox.classList.add('visible');
+    }
+
+    function hideResult() { resultBox.classList.remove('visible'); }
+    function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('visible'); }
+    function hideError() { errorBox.classList.remove('visible'); }
+
+    function toBase64(file) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+    }
+  </script>
+
+</body>
+</html>
