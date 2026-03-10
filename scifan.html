@@ -192,7 +192,7 @@
 
   <script>
     const HF_SPACE    = 'https://rawmeta3000-scifan.hf.space';
-    const API_ENDPOINT = `${HF_SPACE}/call/classify_image`;
+    const API_ENDPOINT = `${HF_SPACE}/api/predict`;
 
     const dropZone      = document.getElementById('dropZone');
     const fileInput     = document.getElementById('fileInput');
@@ -257,26 +257,15 @@
       try {
         const base64 = await toBase64(currentFile);
 
-        const startRes = await fetch(API_ENDPOINT, {
+        const res = await fetch(API_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            data: [{
-              path: null,
-              url: base64,
-              size: currentFile.size,
-              orig_name: currentFile.name,
-              mime_type: currentFile.type,
-              is_stream: false,
-              meta: {}
-            }]
-          })
+          body: JSON.stringify({ data: [base64] })
         });
 
-        if (!startRes.ok) throw new Error(`API error: ${startRes.status}`);
-        const { event_id } = await startRes.json();
-        const result = await pollResult(event_id);
-        showResult(result);
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        const json = await res.json();
+        showResult(json.data[0]);
 
       } catch (err) {
         showError(err.message || 'Something went wrong. Is the Space awake?');
@@ -284,35 +273,6 @@
         classifyBtn.disabled = false;
         classifyBtn.textContent = 'Classify';
       }
-    }
-
-    function pollResult(event_id) {
-      return new Promise((resolve, reject) => {
-        const es = new EventSource(`${API_ENDPOINT}/${event_id}`);
-        const timeout = setTimeout(() => {
-          es.close();
-          reject(new Error('Timed out — the Space may be waking up. Try again in a moment.'));
-        }, 60000);
-
-        es.addEventListener('error', ev => {
-          try {
-            const data = JSON.parse(ev.data);
-            clearTimeout(timeout);
-            es.close();
-            reject(new Error(data.message || 'Prediction error'));
-          } catch (_) { /* connection drop, will retry */ }
-        });
-
-        es.addEventListener('complete', ev => {
-          clearTimeout(timeout);
-          es.close();
-          try {
-            resolve(JSON.parse(ev.data)[0]);
-          } catch (_) {
-            reject(new Error('Could not parse response from model.'));
-          }
-        });
-      });
     }
 
     function showResult(data) {
