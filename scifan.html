@@ -190,21 +190,20 @@
     <a href="index.html">All Projects</a>
   </footer>
 
-  <script>
-    const HF_SPACE    = 'https://rawmeta3000-scifan.hf.space';
-    const API_ENDPOINT = `${HF_SPACE}/api/predict`;
+  <script type="module">
+    import { Client } from "https://esm.sh/@gradio/client";
 
-    const dropZone      = document.getElementById('dropZone');
-    const fileInput     = document.getElementById('fileInput');
-    const previewWrap   = document.getElementById('previewWrap');
-    const previewImg    = document.getElementById('previewImg');
-    const classifyBtn   = document.getElementById('classifyBtn');
-    const resetBtn      = document.getElementById('resetBtn');
-    const errorBox      = document.getElementById('errorBox');
-    const resultBox     = document.getElementById('resultBox');
-    const verdictLabel  = document.getElementById('verdictLabel');
+    const dropZone       = document.getElementById('dropZone');
+    const fileInput      = document.getElementById('fileInput');
+    const previewWrap    = document.getElementById('previewWrap');
+    const previewImg     = document.getElementById('previewImg');
+    const classifyBtn    = document.getElementById('classifyBtn');
+    const resetBtn       = document.getElementById('resetBtn');
+    const errorBox       = document.getElementById('errorBox');
+    const resultBox      = document.getElementById('resultBox');
+    const verdictLabel   = document.getElementById('verdictLabel');
     const confidenceMain = document.getElementById('confidenceMain');
-    const barsContainer = document.getElementById('barsContainer');
+    const barsContainer  = document.getElementById('barsContainer');
 
     let currentFile = null;
 
@@ -255,18 +254,9 @@
       hideResult();
 
       try {
-        const base64 = await toBase64(currentFile);
-
-        const res = await fetch(API_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: [base64] })
-        });
-
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-        const json = await res.json();
-        showResult(json.data[0]);
-
+        const client = await Client.connect("rawmeta3000/scifan");
+        const result = await client.predict("/classify_image", { img: currentFile });
+        showResult(result.data[0]);
       } catch (err) {
         showError(err.message || 'Something went wrong. Is the Space awake?');
       } finally {
@@ -310,15 +300,6 @@
     function hideResult() { resultBox.classList.remove('visible'); }
     function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('visible'); }
     function hideError() { errorBox.classList.remove('visible'); }
-
-    function toBase64(file) {
-      return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = e => res(e.target.result);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
-    }
   </script>
 
 </body>
